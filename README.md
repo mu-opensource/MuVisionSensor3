@@ -1,2 +1,100 @@
-# MuVisionSensorIII
-Open source arduino library for Mu Vision Sensor
+[![Morpx-bbs](http://bbs.morpx.com/template/mu/images/logo.png)](http://bbs.morpx.com/forum.php)
+[![Git-rep](https://img.shields.io/github/repo-size/mu-opensource/MuVisionSensorIII.svg)](https://github.com/tianli/MoonBot)
+[![Git-release](https://img.shields.io/github/downloads/mu-opensource/MuVisionSensorIII/total.svg)](https://github.com/tianli/MoonBot/releases)
+
+
+MuVisionSensor
+==============
+[![Pic-vision-sensor](http://mai.morpx.com/images/page201904/banner1.jpg)](http://mai.morpx.com/)
+
+The MU Vision Sensor is a sensor module that supports Arduino, Microbit, and other haredware platform that supports UART or I2C communication protocols.
+
+You can use these libraries to read data or set properties of the MU Vision Sensor.
+
+## Simple example
+
+How quickly can you get up and running with the library?  Here's a simple blink program:
+
+	#include <MuVisionSensor.h>
+	#include <Wire.h>
+	#define VISION_TYPE VISION_BALL_DETECT
+	#define MU_ADDRESS    0x60
+	MuVisionSensor Mu(MU_ADDRESS);
+	void setup() { 
+		Wire.begin();
+		Mu.begin(&Wire, kI2CMode);
+		Mu.VisionBegin(VISION_TYPE);
+	}
+	void loop() {
+		if (Mu.GetValue(VISION_TYPE, kStatus)) {
+			int x = Mu.GetValue(VISION_TYPE, kXValue);
+			int y = Mu.GetValue(VISION_TYPE, kYValue);
+			int width = Mu.GetValue(VISION_TYPE, kWidthValue);
+			int height = Mu.GetValue(VISION_TYPE, kHeightValue);
+			int label = Mu.GetValue(VISION_TYPE, kLabel);
+		}
+	}
+
+## Supported platforms
+Right now the library is supported on a variety of arduino compatable platforms. If you want to use the library on other plantforms witch supported on C/C++, please follow the steps below:
+
+### Uart
+> 1.Edit file `mu_vision_sensor_uart_hw_interface.h` in path `MuVisionSensor/src/` 
+
+> 2.Modify typedef `MuVsUart` in line `21` to the UART Class supported by the platform
+
+> 3.Save and close file `mu_vision_sensor_uart_hw_interface.h`
+
+> 4.Edit file `mu_vision_sensor_uart_hw_interface.cpp` in path `MuVisionSensor/src/`
+
+> 5.Override the functions below:
+> 
+	/**
+	  * @brief  Uart read characters from stream into buffer.
+	  * @param  temp: uart buffer.
+	  * @param  length: the number of characters you want to read.
+	  * @retval returns the number of characters placed in the buffer, terminates if length characters have been read, or timeout.
+	  */
+	uint32_t MuVisionSensorUart::UartRead(uint8_t* temp, uint8_t length);
+> 
+	/**
+	  * @brief  Uart write characters from buffer into stream.
+	  * @param  temp: uart buffer.
+	  * @param  length: the number of characters you want to write.
+	  * @retval returns the number of characters placed in the stream, terminates if length characters have been write, or timeout.
+	  */
+	uint32_t MuVisionSensorUart::UartWrite(uint8_t* temp, uint8_t length);
+
+> 6.Save and close file `mu_vision_sensor_uart_hw_interface.cpp`
+
+### I2C
+> 1.Edit file `mu_vision_sensor_i2c_hw_interface.h` in path `MuVisionSensor/src/` 
+
+> 2.Modify typedef `MuVsI2C` in line `24` to the I2C Class supported by the platform
+
+> 3.Save and close file `mu_vision_sensor_i2c_hw_interface.h`
+
+> 4.Edit file `mu_vision_sensor_i2c_hw_interface.cpp` in path `MuVisionSensor/src/`
+
+> 5.Override the functions below:
+> 
+	/**
+	  * @brief  I2C read byte.
+	  * @param  reg_address: register address.
+	  * @param  temp: register value.
+	  * @retval 0: read success
+	  *         not 0: error
+	  */
+	uint32_t MuVisionSensorUart::I2CRead(uint8_t reg_address, uint8_t* temp);
+> 
+	/**
+	  * @brief  I2C write byte.
+	  * @param  reg_address: register address.
+	  * @param  value: the value write to register.
+	  * @retval 0: write success
+	  *         not 0: error
+	  */
+	uint32_t MuVisionSensorUart::I2CWrite(uint8_t reg_address, uint8_t value);
+> 6.Save and close file `mu_vision_sensor_i2c_hw_interface.cpp`
+
+
