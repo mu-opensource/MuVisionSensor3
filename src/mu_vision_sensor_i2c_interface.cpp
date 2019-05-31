@@ -14,13 +14,6 @@ MuVsI2CMethod::MuVsI2CMethod(uint32_t address)
 
 MuVsI2CMethod::~MuVsI2CMethod() {}
 
-//Not use
-//mu_err_t MuVsI2CMethod::begin(uint32_t speed) {
-//  mu_err_t err;
-//
-//  return err;
-//}
-
 mu_err_t MuVsI2CMethod::Get(const uint8_t reg_address,
                              uint8_t* value) {
 	return I2CRead(reg_address, value);

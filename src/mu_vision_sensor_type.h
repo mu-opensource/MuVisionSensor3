@@ -22,14 +22,6 @@
 #define STREAM_DEBUG_ENABLE 0
 
 typedef unsigned char mu_err_t;
-/*
- * MuVisionType
- * Bit: |          3         |          2         |            1             |           0         |
- *      | VISION_LINE_DETECT | VISION_BALL_DETECT | VISION_COLOR_RECOGNITION | VISION_COLOR_DETECT |
- *      |           7            |             6              |             5            |          4         |
- *      | VISION_NUM_CARD_DETECT | VISION_TRAFFIC_CARD_DETECT | VISION_SHAPE_CARD_DETECT | VISION_BODY_DETECT |
- */
-typedef unsigned short MuVisionType;
 
 #ifdef BIT
 #undef BIT
@@ -40,30 +32,12 @@ typedef unsigned short MuVisionType;
 
 #define MU_PROTOCOL_VERSION           0x03
 #define visionTypeEnumToMacro(v)      (BIT(v-1))
-typedef enum {
-  kVisionColorDetect  = 1,
-  kVisionColorRecog   = 2,
-  kVisionBall         = 3,
-  kVisionBody         = 5,
-  kVisionShapeCard    = 6,
-  kVisionTrafficCard  = 7,
-  kVisionNumberCard   = 8,
-  kVisionMaxType         ,
-} MuVsMessageVisionType;
-//Vision Type User Input
-#define VISION_COLOR_DETECT           (MuVisionType)visionTypeEnumToMacro(kVisionColorDetect)
-#define VISION_COLOR_RECOGNITION      (MuVisionType)visionTypeEnumToMacro(kVisionColorRecog)
-#define VISION_BALL_DETECT            (MuVisionType)visionTypeEnumToMacro(kVisionBall)
-#define VISION_BODY_DETECT            (MuVisionType)visionTypeEnumToMacro(kVisionBody)
-#define VISION_SHAPE_CARD_DETECT      (MuVisionType)visionTypeEnumToMacro(kVisionShapeCard)
-#define VISION_TRAFFIC_CARD_DETECT    (MuVisionType)visionTypeEnumToMacro(kVisionTrafficCard)
-#define VISION_NUM_CARD_DETECT        (MuVisionType)visionTypeEnumToMacro(kVisionNumberCard)
-#define VISION_ALL                    (MuVisionType)(visionTypeEnumToMacro(kVisionMaxType)-1)
+
 //Error Type
 #define MU_OK                         0x00
 #define CLIENT_WRITE_TIMEOUT          0x02
 #define SERVER_RESPONSE_TIMEOUT       0x03
-#define SERVER_RESPONSE_OTHERVISION   0x03
+#define SERVER_RESPONSE_OTHERVISION   0x04
 #define MU_ERROR_UNSUPPROT_BAUD       0x10
 #define MU_ERROR_UNSUPPROT_PROTOCOL   0x11
 #define MU_ERROR_OK                   0xE0
@@ -83,34 +57,16 @@ typedef enum {
 #define MU_PROTOCOL_COMMADN_GET       0x02
 #define MU_PROTOCOL_MESSAGE           0x11
 
-// Card Type
-// Shape Card
-#define MU_SHAPE_CARD_TICK            0x01U
-#define MU_SHAPE_CARD_CROSS           0x02U
-#define MU_SHAPE_CARD_CIRCLE          0x03U
-#define MU_SHAPE_CARD_SQUARE          0x04U
-#define MU_SHAPE_CARD_TRIANGLE        0x05U
-// Traffic Card
-#define MU_TRAFFIC_CARD_FORWARD       0x01U
-#define MU_TRAFFIC_CARD_LEFT          0x02U
-#define MU_TRAFFIC_CARD_RIGHT         0x03U
-#define MU_TRAFFIC_CARD_TURN_AROUND   0x04U
-#define MU_TRAFFIC_CARD_PARK          0x05U
-// Color Recognize Type
-#define MU_COLOR_UNKNOWN              0x00U
-#define MU_COLOR_BLACK                0x01U
-#define MU_COLOR_WHITE                0x02U
-#define MU_COLOR_RED                  0x03U
-#define MU_COLOR_YELLOW               0x04U
-#define MU_COLOR_GREEN                0x05U
-#define MU_COLOR_CYAN                 0x06U
-#define MU_COLOR_BLUE                 0x07U
-#define MU_COLOR_PURPLE               0x08U
-
 typedef enum {
-  kLed1,
-  kLed2,
-} MuVsLed;
+  kVisionColorDetect  = 1,
+  kVisionColorRecog   = 2,
+  kVisionBall         = 3,
+  kVisionBody         = 5,
+  kVisionShapeCard    = 6,
+  kVisionTrafficCard  = 7,
+  kVisionNumberCard   = 8,
+  kVisionMaxType         ,
+} MuVsMessageVisionType;
 typedef enum {
   kLedClose           = 0,
   kLedRed             = 1,
@@ -162,6 +118,10 @@ typedef enum {
 
 //type define
 typedef enum {
+  kLed1,
+  kLed2,
+} MuVsLed;
+typedef enum {
   kSerialMode,
   kI2CMode,
 } MuVsMode;
@@ -187,9 +147,10 @@ typedef enum {
   kBValue,        // B channel value
 } MuVsObjectInf;
 typedef enum {
-  kCallBackMode = 0,
-  kDataFlowMode = 1,
-  kEventMode    = 2,
+  // for UART mode only
+  kCallBackMode = 0,      // u need send a request first, and wait for response
+  kDataFlowMode = 1,      // MU will automatically response the result of the vision that u enabled, whether it detected or undetected
+  kEventMode    = 2,      // MU can only automatically response the result of the vision that u enabled, which detected target
 } MuVsStreamOutputMode;
 typedef enum {
   kZoomDefault  = 0,
@@ -200,30 +161,23 @@ typedef enum {
   kZoom5        = 5,
 } MuVsCameraZoom;
 typedef enum {
-  kFPSNormal        = 0,
-  kFPSHigh          = 1,
+  kFPSNormal        = 0,          // 25FPS mode
+  kFPSHigh          = 1,          // 50FPS mode
 } MuVsCameraFPS;
 typedef enum {
-  kAutoWhiteBalance       = 0,
-  kLockWhiteBalance       = 1,
-  kWhiteLight             = 2,
-  kYellowLight            = 3,
+  kAutoWhiteBalance       = 0,    // auto white balance mode
+  kLockWhiteBalance       = 1,    // lock white balance with current value, the entire process takes about 100ms
+  kWhiteLight             = 2,    // white light mode
+  kYellowLight            = 3,    // yellow light mode
 } MuVsCameraWhiteBalance;
 typedef enum {
   kLevelDefault         = 0,
-  kLevelSpeed           = 1,
-  kLevelBalance         = 2,
-  kLevelAccuracy        = 3,
+  kLevelSpeed           = 1,      // speed first mode
+  kLevelBalance         = 2,      // balance mode
+  kLevelAccuracy        = 3,      // accuracy first mode
 } MuVsVisionLevel;
-typedef enum {
-  kUart   = 0x00,
-  kI2c    = 0x01,
-} MuVsSensorOutputMode;
-//typedef enum {
-//  kStopFrameOutput    = 0x00,
-//  kStartFrameOutput   = 0x01,
-//} MuVsFrameOutputMode;
 
+// register type
 typedef union {
   struct {
     unsigned char reserve0 : 2;
@@ -231,13 +185,6 @@ typedef union {
   };
   unsigned char sensor_config_reg_value;
 } MuVsSensorConfig1;
-typedef union {
-  struct {
-    unsigned char status :1;
-    MuVsSensorOutputMode output_mode :3;
-  };
-  unsigned char sensor_output_config_reg_value;
-} MuVsSensorOutputConfig;
 typedef union {
   struct {
     MuVsBaudrate baudrate :3;

@@ -27,7 +27,6 @@ class MuVsI2CMethod : public MuVsMethod {
   virtual uint32_t I2CRead(uint8_t reg_address, uint8_t* temp) = 0;
   virtual uint32_t I2CWrite(uint8_t reg_address, uint8_t value) = 0;
 
-//  virtual mu_err_t begin(uint32_t speed) override;		//not use
   virtual mu_err_t Get(const uint8_t reg_address,
                        uint8_t* value) override;
   virtual mu_err_t Set(const uint8_t reg_address,
