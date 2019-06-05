@@ -38,7 +38,7 @@ void loop() {
 ```
 ## Supported platforms
 
-Right now the library is supported on a variety of arduino compatable platforms. If you want to use the library on other plantforms witch supported on C/C++, please follow the steps below:
+Right now the library is supported on a variety of arduino compatable platforms. If you want to use the library on other plantforms which supported on C/C++, please follow the steps below:
 
 ### Uart
 
