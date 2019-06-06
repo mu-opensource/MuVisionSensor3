@@ -28,13 +28,12 @@ class MuVisionSensorUart: public MuVsUartMethod {
   MuVisionSensorUart(const MuVisionSensorUart&) = delete;
   MuVisionSensorUart& operator=(const MuVisionSensorUart &) = delete;
 
- private:
-//  uint32_t UartAvailable(void);
-  uint32_t UartRead(uint8_t* temp, uint8_t length);
-  uint32_t UartWrite(uint8_t* temp, uint8_t length);
-  MuVsUart* uart_ = nullptr;
+  virtual uint32_t UartRead(uint8_t* temp, uint8_t length) override;
+  virtual uint32_t UartWrite(uint8_t* temp, uint8_t length) override;
 
+ private:
  protected:
+  MuVsUart* uart_ = nullptr;
 };
 
 #endif /* ARDUINO_LIB_MUVISIONSENSOR_SRC_MU_VISION_SENSOR_UART_HW_INTERFACE_H_ */

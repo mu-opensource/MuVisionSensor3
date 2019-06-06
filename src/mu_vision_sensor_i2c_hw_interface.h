@@ -17,11 +17,14 @@
 
 #include "mu_vision_sensor_i2c_interface.h"
 #include <Wire.h>
-//#include <SoftwareWire.h>
-//typedef SoftwareWire MuVsI2C;
-
 //@type define I2C type
 typedef TwoWire MuVsI2C;
+
+// if u want to use software wire in arduino, change include and MuVsI2C type here
+//#include <SoftwareWire.h>
+//@type define I2C type
+//typedef SoftwareWire MuVsI2C;
+
 
 // @Must public inheritance class MuVsI2CMethod
 class MuVisionSensorI2C: public MuVsI2CMethod {
@@ -43,7 +46,7 @@ class MuVisionSensorI2C: public MuVsI2CMethod {
   * @brief  I2C write byte.
   * @param  reg_address: register address.
   * @param  value: the value write to register.
-  * @retval 0: read success
+  * @retval 0: write success
   *         not 0: error
   */
   virtual uint32_t I2CWrite(uint8_t reg_address, uint8_t value) override;

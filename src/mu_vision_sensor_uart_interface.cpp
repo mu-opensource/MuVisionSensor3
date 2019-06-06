@@ -14,22 +14,6 @@ MuVsUartMethod::MuVsUartMethod(uint32_t address)
 
 MuVsUartMethod::~MuVsUartMethod() {}
 
-//Not use
-//mu_err_t MuVsUartMethod::begin(uint32_t speed) {
-//  mu_err_t err;
-//  MuVsBaudrate baud = (MuVsBaudrate)speed;
-//  //Compare baudrate and write value.
-//  uint8_t mu_uart_baud;
-//  err = Get(kRegUart,
-//            &mu_uart_baud);
-//  if (err != MU_OK) return err;
-//  if ((mu_uart_baud&0x07) != baud) {
-//    mu_uart_baud = (mu_uart_baud & (~0x07)) | baud;
-//    err = Set(kRegUart, mu_uart_baud);
-//  }
-//  return err;
-//}
-
 mu_err_t MuVsUartMethod::Get(const uint8_t reg_address,
                              uint8_t* value) {
   const uint8_t mu_address = mu_address_;
@@ -152,7 +136,7 @@ mu_err_t MuVsUartMethod::Read(uint8_t* mu_address,
 }
 
 mu_err_t MuVsUartMethod::GetMessage(MuVsMessageVisionType vision_type) {
-  uint8_t data_buf[7] = {0xFF,0x07,mu_address_,0x12,vision_type,0,0xED};
+  uint8_t data_buf[7] = {0xFF,0x07,(uint8_t)mu_address_,0x12,vision_type,0,0xED};
   data_buf[5] = SumCheck(data_buf, 5);
   uint32_t write_len = UartWrite(data_buf, 7);
   if (write_len < 7) return CLIENT_WRITE_TIMEOUT;

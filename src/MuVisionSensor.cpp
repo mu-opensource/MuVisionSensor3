@@ -65,10 +65,9 @@ uint8_t MuVisionSensor::begin(void* communication_port,
 //Advance interface
 uint8_t MuVisionSensor::VisionBegin(MuVisionType vision_type) {
   mu_err_t err;
-  err = VisionSetDefault(vision_type);
-  if (err) return err;
   err = VisionSetStatus(vision_type, true);
   if (err) return err;
+  delay(20);          // FIXME waiting for vision to initialize, may delete in later version
   err = VisionSetOutputMode(kCallBackMode);
   if (err) return err;
   return MU_OK;
@@ -80,58 +79,12 @@ uint8_t MuVisionSensor::VisionEnd(MuVisionType vision_type) {
 
 int MuVisionSensor::GetValue(MuVisionType vision_type,
                              MuVsObjectInf object_inf) {
-//  uint8_t vision_pointer = 0;
-//  MuVisionType vision_type_src = vision_type;
-//  while ((vision_type & 0x01) == 0 && vision_pointer < 8) {
-//    vision_type = vision_type >> 1;
-//    vision_pointer++;
-//  }
-//  if (vision_state_[vision_pointer] == nullptr) return -1;
-//  if (object_inf == kStatus) {
-//    while((UpdateResult(vision_type_src, true)&vision_type_src) == 0);
-//  }
-//  return (int)read(vision_type_src, object_inf);
-
-//  uint8_t vision_pointer = 0;
-//  MuVisionType vision_type_src = vision_type;
-//  while ((vision_type & 0x01) == 0 && vision_pointer < 8) {
-//    vision_type = vision_type >> 1;
-//    vision_pointer++;
-//  }
-//  if (vision_state_[vision_pointer] == nullptr) return -1;
   if (object_inf == kStatus) {
     while((UpdateResult(vision_type, true)&vision_type) == 0);
   }
   return (int)read(vision_type, object_inf);
 }
 
-//uint8_t MuVisionSensor::VisionSetEnable(MuVisionType vision_type,
-//                                        MuVsStreamOutputMode mode) {
-//  mu_err_t err;
-//  output_mode_ = mode;
-//  MuVsVisionConfig1 vision_config1;
-//  for (int i = 1; i < kVisionMaxType; i++) {
-//    err = mu_vs_method->Set(kRegVisionId, i);
-//    if(err) return err;
-//    err = mu_vs_method->Get(kRegVisionConfig1, &vision_config1.vision_config_reg_value);
-//    uint8_t status = (vision_type&visionTypeEnumToMacro(i)) ? 1:0;
-//    if (vision_config1.status != status
-//        || vision_config1.output_mode != mode) {
-//      vision_config1.status = status;
-//      vision_config1.output_mode = mode;
-//      err = mu_vs_method->Set(kRegVisionConfig1,
-//                              vision_config1.vision_config_reg_value);
-//      if (err) return err;
-//    }
-//    if (status) {
-//      malloc_vision_buffer(MuVsMessageVisionType(i));
-//    } else {
-//      free_vision_buffer(MuVsMessageVisionType(i));
-//    }
-////    output_mode[i-1] = vision_config1.output_mode;
-//  }
-//  return err;
-//}
 
 uint8_t MuVisionSensor::VisionSetStatus(MuVisionType vision_type, bool enable) {
   mu_err_t err;
@@ -153,35 +106,11 @@ uint8_t MuVisionSensor::VisionSetStatus(MuVisionType vision_type, bool enable) {
       } else {
         free_vision_buffer(MuVsMessageVisionType(i));
       }
-//      output_mode[i-1] = vision_config1.output_mode;
       output_mode_ = vision_config1.output_mode;
     }
   }
   return MU_OK;
 }
-
-//uint8_t MuVisionSensor::VisionSetOutputMode(MuVisionType vision_type,
-//                                            MuVsStreamOutputMode mode) {
-//  mu_err_t err;
-//  MuVsVisionConfig1 vision_config1;
-//  output_mode_ = mode;
-//  for (int i = 1; i < kVisionMaxType; i++) {
-////    if (vision_type & visionTypeEnumToMacro(i)) {
-//    if (output_mode[i-1] != mode) {
-//      output_mode[i-1] = mode;
-//      err = mu_vs_method->Set(kRegVisionId, i);
-//      if(err) return err;
-//      err = mu_vs_method->Get(kRegVisionConfig1, &vision_config1.vision_config_reg_value);
-//      if (err) return err;
-//      vision_config1.output_mode = mode;
-//      err = mu_vs_method->Set(kRegVisionConfig1,
-//                              vision_config1.vision_config_reg_value);
-//      if (err) return err;
-//    }
-////    }
-//  }
-//  return MU_OK;
-//}
 
 uint8_t MuVisionSensor::VisionSetOutputMode(MuVsStreamOutputMode mode) {
   mu_err_t err;
@@ -298,17 +227,8 @@ MuVisionType MuVisionSensor::UpdateResult(MuVisionType vision_type,
       mu_err_t err;
       MuVisionType vision_type_output = 0;
       MuVsVisionState vision_state;
-//          {
-//        SensorLockReg(false);     //TODO Patch
-//          }
       err = mu_vs_method->Get(kRegFrameCount, &vision_state.frame);
       if (err) return vision_type_output;
-        //TODO Patch
-//          {
-//        if (vision_state.frame == 0) {
-//          return vision_type_output;
-//        }
-//          }
       for (uint8_t i = 1; i < kVisionMaxType; ++i) {
         if ((vision_type & visionTypeEnumToMacro(i)) && vision_state_[i-1]) {
           if (vision_state.frame != vision_state_[i-1]->frame) {
@@ -351,11 +271,6 @@ MuVisionType MuVisionSensor::UartUpdateResult(MuVisionType vision_type,
                 && mu_vision_type
                 && mu_vision_type < kVisionMaxType) {
               *vision_state_[mu_vision_type-1] = vision_state;
-//              vision_state_[mu_vision_type-1]->detect = vision_state.detect;
-//              vision_state_[mu_vision_type-1]->frame = vision_state.frame;
-//              for (int i = 0; i < vision_state.detect; i++) {
-//                vision_state_[mu_vision_type-1]->vision_result[i] = vision_state.vision_result[i];
-//              }
               vision_type = vision_type&(~visionTypeEnumToMacro(mu_vision_type));
               vision_detect = vision_detect | visionTypeEnumToMacro(mu_vision_type);
               if (mu_vision_type == i && !wait_all_result) return vision_detect;
@@ -404,17 +319,23 @@ uint8_t MuVisionSensor::write(MuVisionType vision_type,
     vision_type >>= 1;
   }
   switch(object_inf) {
+    case kRValue:
     case kXValue:
       address = kRegParamValue1;
       break;
+    case kGValue:
     case kYValue:
       address = kRegParamValue2;
       break;
+    case kBValue:
     case kWidthValue:
       address = kRegParamValue3;
       break;
     case kHeightValue:
       address = kRegParamValue4;
+      break;
+    case kLabel:
+      address = kRegParamValue5;
       break;
     default:
       return MU_ERROR_FAIL;
@@ -459,24 +380,8 @@ uint8_t MuVisionSensor::read(MuVisionType vision_type,
   }
 }
 
-//uint8_t MuVisionSensor::SensorSetStatus(MuVsSensorStatus status) {
-//  MuVsSensorConfig1 sensor_config1;
-//  mu_err_t err;
-//  err = mu_vs_method->Get(kRegSensorConfig1, &sensor_config1.sensor_config_reg_value);
-//  if (err) return err;
-//  if (sensor_config1.status != status) {
-//    sensor_config1.status = status;
-//    err = mu_vs_method->Set(kRegSensorConfig1, sensor_config1.sensor_config_reg_value);
-//    if (err) return err;
-//  }
-//  return MU_OK;
-//}
-
 uint8_t MuVisionSensor::SensorSetRestart(void) {
-//  MuVsSensorConfig1 sensor_config1;
-  uint8_t reg_restart = 0;
   mu_err_t err;
-//  sensor_config1.restart = 1;
   err = mu_vs_method->Set(kRegRestart, 1);
   return err;
 }
@@ -522,15 +427,6 @@ uint8_t MuVisionSensor::LedSetMode(MuVsLed led, bool manual, bool hold) {
 
   return err;
 }
-
-//uint8_t MuVisionSensor::LedSetLevel(uint8_t led1_level,
-//                                    uint8_t led2_level) {
-//  MuVsLedConfig led_config;
-//  MuVsRegAddress address;
-//  mu_err_t err;
-//  uint8_t value = (led1_level&0x0F)|(led2_level<<4);
-//  return mu_vs_method->Set(kRegLedLevel, value);
-//}
 
 uint8_t MuVisionSensor::LedSetColor(MuVsLed led,
                     MuVsLedColor detected_color,
@@ -610,6 +506,10 @@ uint8_t MuVisionSensor::CameraSetAwb(MuVsCameraWhiteBalance awb) {
   if (camera_config1.white_balance != awb) {
     camera_config1.white_balance = awb;
     err = mu_vs_method->Set(kRegCameraConfig1, camera_config1.camera_reg_value);
+    // waiting for lock white balance
+    if (awb == kLockWhiteBalance) {
+      delay(1000);
+    }
   }
   return err;
 }
@@ -649,30 +549,6 @@ uint8_t MuVisionSensor::UartSetBaudrate(MuVsBaudrate baud) {
   }
   return err;
 }
-
-//bool MuVisionSensor::CheckVisionOutputMode(MuVsMessageVisionType vision_type) {
-//  MuVsVisionConfig1 vision_state;
-//  switch (output_mode[vision_type-1]) {
-//    case kCallBackMode:
-//      mu_vs_method->Set(kRegVisionId, vision_type);
-//      mu_vs_method->Get(kRegVisionConfig1,
-//                        &vision_state.vision_config_reg_value);
-//      vision_state.output_enable = 1;
-//      mu_vs_method->Set(kRegVisionConfig1,
-//                        vision_state.vision_config_reg_value);
-//      break;
-//    case kEventMode:
-//    case kDataFlowMode:
-//      break;
-//    default:
-//      mu_vs_method->Set(kRegVisionId, vision_type);
-//      mu_vs_method->Get(kRegVisionConfig1,
-//                        &vision_state.vision_config_reg_value);
-//      output_mode[vision_type-1] = vision_state.output_mode;
-//      return false;
-//  }
-//  return true;
-//}
 
 bool MuVisionSensor::malloc_vision_buffer(MuVsMessageVisionType vision_type) {
   if (vision_type

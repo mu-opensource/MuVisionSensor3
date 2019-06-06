@@ -16,10 +16,6 @@ MuVisionSensorUart::MuVisionSensorUart(MuVsUart* uart,
 
 MuVisionSensorUart::~MuVisionSensorUart() {}
 
-//uint32_t MuVisionSensorUart::UartAvailable(void) {
-//  return uart_->available();
-//}
-
 uint32_t MuVisionSensorUart::UartRead(uint8_t* temp, uint8_t length) {
 #if STREAM_DEBUG_ENABLE
   uint8_t ret = uart_->readBytes(temp, length);

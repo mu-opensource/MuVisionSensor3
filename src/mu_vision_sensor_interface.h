@@ -25,7 +25,6 @@ class MuVsMethod {
   MuVsMethod(const MuVsMethod&) = delete;
   MuVsMethod& operator=(const MuVsMethod &) = delete;
 
-//  virtual mu_err_t begin(uint32_t speed) = 0;
   virtual mu_err_t Get(const uint8_t reg_address,
                        uint8_t* value) = 0;
   virtual mu_err_t Set(const uint8_t reg_address,
