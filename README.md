@@ -14,7 +14,7 @@ You can use these libraries to read data or set properties of the MU Vision Sens
 
 ## Simple example
 
-How quickly can you get up and running with the library?  Here's a simple blink program:
+How quickly can you get up and running with the library?  Here's a simple program:
 ```cpp
 #include <MuVisionSensor.h>
 #include <Wire.h>
