@@ -6,8 +6,6 @@
  */
 
 #include "MuVisionSensor.h"
-#include "mu_vision_sensor_uart_hw_interface.h"
-#include "mu_vision_sensor_i2c_hw_interface.h"
 #include <Arduino.h>
 
 MuVisionSensor::MuVisionSensor(uint32_t address)
@@ -24,7 +22,7 @@ MuVisionSensor::~MuVisionSensor() {
 }
 
 uint8_t MuVisionSensor::begin(void* communication_port,
-                              MuVsMode mode = kSerialMode) {
+                              MuVsMode mode) {
   if (mu_vs_method) {
     delete mu_vs_method;
     mu_vs_method = nullptr;
@@ -52,7 +50,53 @@ uint8_t MuVisionSensor::begin(void* communication_port,
   while (mu_vs_method->Get(kRegProtocolVersion, &protocol_version)
       || protocol_version != MU_PROTOCOL_VERSION) {
     ++err_count;
-    if (err_count > 50) {
+    if (err_count > 3) {
+      delete mu_vs_method;
+      mu_vs_method = nullptr;
+      return MU_ERROR_UNSUPPROT_PROTOCOL;
+    }
+  }
+
+  return MU_OK;
+}
+uint8_t MuVisionSensor::begin(MuVsUart* communication_port) {
+  if (mu_vs_method) {
+    delete mu_vs_method;
+    mu_vs_method = nullptr;
+  }
+  mode_ = kSerialMode;
+  mu_vs_method = new MuVisionSensorUart((MuVsUart *)communication_port,
+                                        address_);
+  // check vs2 protocol version
+  uint8_t protocol_version = 0;
+  int err_count = 0;
+  while (mu_vs_method->Get(kRegProtocolVersion, &protocol_version)
+      || protocol_version != MU_PROTOCOL_VERSION) {
+    ++err_count;
+    if (err_count > 3) {
+      delete mu_vs_method;
+      mu_vs_method = nullptr;
+      return MU_ERROR_UNSUPPROT_PROTOCOL;
+    }
+  }
+
+  return MU_OK;
+}
+uint8_t MuVisionSensor::begin(MuVsI2C* communication_port) {
+  if (mu_vs_method) {
+    delete mu_vs_method;
+    mu_vs_method = nullptr;
+  }
+  mode_ = kI2CMode;
+  mu_vs_method = new MuVisionSensorI2C((MuVsI2C *)communication_port,
+                                        address_);
+  // check vs2 protocol version
+  uint8_t protocol_version = 0;
+  int err_count = 0;
+  while (mu_vs_method->Get(kRegProtocolVersion, &protocol_version)
+      || protocol_version != MU_PROTOCOL_VERSION) {
+    ++err_count;
+    if (err_count > 3) {
       delete mu_vs_method;
       mu_vs_method = nullptr;
       return MU_ERROR_UNSUPPROT_PROTOCOL;
@@ -85,6 +129,14 @@ int MuVisionSensor::GetValue(MuVisionType vision_type,
   return (int)read(vision_type, object_inf);
 }
 
+MuVsVisionState* MuVisionSensor::GetVisionState(MuVisionType vision_type) {
+  for (unsigned int i = 0; i < kVisionMaxType-1; ++i) {
+    if (vision_type & (0x01<<i)) {
+      return vision_state_[i];
+    }
+  }
+  return nullptr;
+}
 
 uint8_t MuVisionSensor::VisionSetStatus(MuVisionType vision_type, bool enable) {
   mu_err_t err;

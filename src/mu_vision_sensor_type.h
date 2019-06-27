@@ -50,6 +50,7 @@ typedef unsigned char mu_err_t;
 #define MU_ERROR_REG_ADDRESS          0xE7
 #define MU_ERROR_REG_VALUE            0xE8
 #define MU_ERROR_READ_ONLY            0xE9
+#define MU_ERROR_RESTART              0xEA
 //Protocol
 #define MU_PROTOCOL_START             0xFF
 #define MU_PROTOCOL_END               0xED

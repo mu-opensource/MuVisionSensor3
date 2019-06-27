@@ -16,6 +16,8 @@
 #define MUVISIONSENSOR_SRC_MUVISIONSENSOR_H_
 
 #include "mu_vision_sensor_interface.h"
+#include "mu_vision_sensor_uart_hw_interface.h"
+#include "mu_vision_sensor_i2c_hw_interface.h"
 
 /*
  * MuVisionType
@@ -37,19 +39,19 @@ typedef unsigned short MuVisionType;
 #define VISION_ALL                    (MuVisionType)(visionTypeEnumToMacro(kVisionMaxType)-1)
 
 // Card Type
-// Shape Card
+// Vision Shape Card
 #define MU_SHAPE_CARD_TICK            0x01U
 #define MU_SHAPE_CARD_CROSS           0x02U
 #define MU_SHAPE_CARD_CIRCLE          0x03U
 #define MU_SHAPE_CARD_SQUARE          0x04U
 #define MU_SHAPE_CARD_TRIANGLE        0x05U
-// Traffic Card
+// Vision Traffic Card
 #define MU_TRAFFIC_CARD_FORWARD       0x01U
 #define MU_TRAFFIC_CARD_LEFT          0x02U
 #define MU_TRAFFIC_CARD_RIGHT         0x03U
 #define MU_TRAFFIC_CARD_TURN_AROUND   0x04U
 #define MU_TRAFFIC_CARD_PARK          0x05U
-// Color Recognize Type
+// Vision Color Type
 #define MU_COLOR_UNKNOWN              0x00U
 #define MU_COLOR_BLACK                0x01U
 #define MU_COLOR_WHITE                0x02U
@@ -59,6 +61,9 @@ typedef unsigned short MuVisionType;
 #define MU_COLOR_CYAN                 0x06U
 #define MU_COLOR_BLUE                 0x07U
 #define MU_COLOR_PURPLE               0x08U
+// Vision Ball Type
+#define MU_BALL_TABLE_TENNIS          0x01U
+#define MU_BALL_TENNIS                0x02U
 
 
 class MuVisionSensor {
@@ -72,6 +77,7 @@ class MuVisionSensor {
   virtual ~MuVisionSensor();
 
   /**
+    * @ TODO WARNING this function may delete in later version, please use `begin(communication_port)` instead.
     * @brief  MU vision sensor begin.
     * @param  communication_port: MuVsI2C(i2c) or MuVsUart(uart).
     * @param  mode: kSerialMode
@@ -79,8 +85,23 @@ class MuVisionSensor {
     * @retval MU_OK: begin success.
     *         other: protocol assert fail.
     */
-  uint8_t begin(void* communication_port,
+  uint8_t __attribute__ ((deprecated("\n***WARNING*** function `begin(communication_port, mode)` has been deprecated, and may delete in later version, please use `begin(communication_port)` instead.")))
+          begin(void* communication_port,
                 MuVsMode mode);
+  /**
+    * @brief  MU vision sensor begin.
+    * @param  communication_port: MuVsUart(uart).
+    * @retval MU_OK: begin success.
+    *         other: protocol assert fail.
+    */
+  uint8_t begin(MuVsUart* communication_port);
+  /**
+    * @brief  MU vision sensor begin.
+    * @param  communication_port: MuVsI2C(i2c).
+    * @retval MU_OK: begin success.
+    *         other: protocol assert fail.
+    */
+  uint8_t begin(MuVsI2C* communication_port);
 
   // Based interface
   /**
@@ -119,7 +140,16 @@ class MuVisionSensor {
                uint8_t value) {
     return write(vision_type, object_inf, value);
   }
-
+  /**
+    * @brief  get vision result buffer pointer.
+    *         this function WILL NOT update vision result, please use
+    *         function `UpdateResult([vision_type])` or
+    *         `GetValue([vision_type], kStatus)` to update vision result before this function
+    * @param  vision_type: vision type.
+    * @retval vision result buffer pointer,
+    *         return `nullptr` if the vision type is not `begin` or not supported
+    */
+  MuVsVisionState* GetVisionState(MuVisionType vision_type);
 
   // Advance interface
   /**

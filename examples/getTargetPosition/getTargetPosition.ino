@@ -1,17 +1,29 @@
+#include <MuVisionSensor.h>
 #include <Wire.h>
-#include "MuVisionSensor.h"
 #include <SoftwareSerial.h>
 
+/*
+ * Choose communication mode define here:
+ *    I2C_MODE    : I2C mode, default pin: MU_SDA <==> ARDUINO_SDA, MU_SCL <==> ARDUINO_SCL
+ *    SERIAL_MODE : Serial mode, default pin: MU_TX <==> ARDUINO_PIN3, MU_RX <==> ARDUINO_PIN2
+ */
 #define I2C_MODE
 //#define SERIAL_MODE
+
+/*
+ * Choose MU address here: 0x60, 0x61, 0x62, 0x63
+ */
 #define MU_ADDRESS    0x60
-// change vision type here, VISION_TYPE:VISION_COLOR_DETECT
-//                                      VISION_COLOR_RECOGNITION
-//                                      VISION_BALL_DETECT
-//                                      VISION_BODY_DETECT
-//                                      VISION_SHAPE_CARD_DETECT
-//                                      VISION_TRAFFIC_CARD_DETECT
-//                                      VISION_NUM_CARD_DETECT
+
+/*
+ * Change vision type here, VISION_TYPE:VISION_COLOR_DETECT
+ *                                      VISION_COLOR_RECOGNITION
+ *                                      VISION_BALL_DETECT
+ *                                      VISION_BODY_DETECT
+ *                                      VISION_SHAPE_CARD_DETECT
+ *                                      VISION_TRAFFIC_CARD_DETECT
+ *                                      VISION_NUM_CARD_DETECT
+ */
 #define VISION_TYPE     VISION_BALL_DETECT
 
 #ifdef SERIAL_MODE
@@ -28,18 +40,17 @@ void setup() {
 
 #ifdef I2C_MODE
   Wire.begin();
-  Mu.begin(&Wire, kI2CMode);
+  Mu.begin(&Wire);              // initialized MU on I2C port
 #elif defined SERIAL_MODE
   mySerial.begin(9600);
-  Mu.begin(&mySerial, kSerialMode);
+  Mu.begin(&mySerial);          // initialized MU on soft serial port
 #endif
 
-  Mu.VisionBegin(VISION_TYPE);
+  Mu.VisionBegin(VISION_TYPE);  // enable vision
 
   if (VISION_TYPE == VISION_COLOR_DETECT
       || VISION_TYPE == VISION_COLOR_RECOGNITION) {
     Mu.CameraSetAwb(kLockWhiteBalance); // lock AWB
-    delay(1000);                        // waiting for AWB lock.
     if (VISION_TYPE == VISION_COLOR_RECOGNITION) {
       Mu.write(VISION_TYPE, kXValue, 50);
       Mu.write(VISION_TYPE, kYValue, 50);

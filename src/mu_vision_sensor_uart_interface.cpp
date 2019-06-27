@@ -104,8 +104,6 @@ mu_err_t MuVsUartMethod::Read(uint8_t* mu_address,
   uint8_t data_buf[9+MU_MAX_RESULT*5] = {0};
   mu_err_t err;
   uint32_t read_len;
-//  err = get_protocol_head(data_buf, mu_address);
-//  if (err != MU_OK) return err;
   do {
     //TODO may get data from other serial device.
     read_len = UartRead(data_buf, 1);

@@ -14,7 +14,7 @@ You can use these libraries to read data or set properties of the MU Vision Sens
 
 ## Simple example
 
-How quickly can you get up and running with the library?  Here's a simple blink program:
+How quickly can you get up and running with the library?  Here's a simple program:
 ```cpp
 #include <MuVisionSensor.h>
 #include <Wire.h>
@@ -22,23 +22,23 @@ How quickly can you get up and running with the library?  Here's a simple blink 
 #define MU_ADDRESS    0x60
 MuVisionSensor Mu(MU_ADDRESS);
 void setup() { 
-  Wire.begin();
-  Mu.begin(&Wire, kI2CMode);
-  Mu.VisionBegin(VISION_TYPE);
+  Wire.begin();                                           // I2C or Serial must initialize before MU vision sensor
+  Mu.begin(&Wire);                                        // MU begin
+  Mu.VisionBegin(VISION_TYPE);                            // vision begin
 }
 void loop() {
-  if (Mu.GetValue(VISION_TYPE, kStatus)) {
-    int x = Mu.GetValue(VISION_TYPE, kXValue);
-    int y = Mu.GetValue(VISION_TYPE, kYValue);
-    int width = Mu.GetValue(VISION_TYPE, kWidthValue);
-    int height = Mu.GetValue(VISION_TYPE, kHeightValue);
-    int label = Mu.GetValue(VISION_TYPE, kLabel);
+  if (Mu.GetValue(VISION_TYPE, kStatus)) {                // get vision status value
+    int x = Mu.GetValue(VISION_TYPE, kXValue);            // get vision X axes value
+    int y = Mu.GetValue(VISION_TYPE, kYValue);            // get vision Y axes value
+    int width = Mu.GetValue(VISION_TYPE, kWidthValue);    // get vision width value
+    int height = Mu.GetValue(VISION_TYPE, kHeightValue);  // get vision height value
+    int label = Mu.GetValue(VISION_TYPE, kLabel);         // get vision label value
   }
 }
 ```
 ## Supported platforms
 
-Right now the library is supported on a variety of arduino compatable platforms. If you want to use the library on other plantforms witch supported on C/C++, please follow the steps below:
+Right now the library is supported on a variety of arduino compatable platforms. If you want to use the library on other plantforms which supported on C/C++, please follow the steps below:
 
 ### Uart
 
