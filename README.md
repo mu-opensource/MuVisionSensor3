@@ -36,6 +36,14 @@ void loop() {
   }
 }
 ```
+## More examples
+
+You can get more examples under the folder `examples/`.
+
+If you want to test your vision sensor, you can refer to the examples under the folder `examples/test/`.
+
+Or you want to use vision sensor without the library `MuVisionSensor`, you can refer to the examples under the folder `examples/use_arduino_base_interface_only/`.
+
 ## Supported platforms
 
 Right now the library is supported on a variety of arduino compatable platforms. If you want to use the library on other plantforms which supported on C/C++, please follow the steps below:
