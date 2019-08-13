@@ -112,8 +112,8 @@ uint32_t MuVisionSensorI2C::I2CWrite(uint8_t reg_address, uint8_t value);
 
 ## What about other library for MuVisionSensor?
 
-* Mixly		[https://github.com/mu-opensource/MuVisionSensorIII-Mixly](https://github.com/mu-opensource/MuVisionSensorIII-Mixly)
-* Micro:Bit	[https://github.com/mu-opensource/MuVisionSensor-MakeCode](https://github.com/mu-opensource/MuVisionSensor-MakeCode)
+* Mixly		[https://github.com/mu-opensource/MuVisionSensor3-Mixly](https://github.com/mu-opensource/MuVisionSensor3-Mixly)
+* Micro:Bit	[https://github.com/mu-opensource/pxt-MuVisionSensor3](https://github.com/mu-opensource/pxt-MuVisionSensor3)
 
 ## For more information
 
