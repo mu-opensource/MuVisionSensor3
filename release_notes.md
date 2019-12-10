@@ -1,3 +1,12 @@
+MuVisionSensor V1.2.1
+==============================
+- 1.bug fixes: now all the examples can works correctly on boards that don't have `SoftwareSerial` library like esp32/8266
+- 2.rename from "III" -> "3"
+- 3.bug fixes: now MU works correctly after sensor set default
+- 4.added new functions: light sensor
+- 5.added new enum type for LED: `kLedAll`
+- 6.added new library: `MuVisionSensor3_AT.h` for AT commands
+
 MuVisionSensor V1.1.6
 ==============================
 * 1.添加了球算法Label类型：`MU_BALL_TABLE_TENNIS,MU_BALL_TENNIS`

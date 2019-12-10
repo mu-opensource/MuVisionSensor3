@@ -1,6 +1,3 @@
-#include <MuVisionSensor.h>
-#include <Wire.h>
-#include <SoftwareSerial.h>
 
 /*
  * Choose communication mode define here:
@@ -26,7 +23,13 @@
  */
 #define VISION_TYPE     VISION_BALL_DETECT
 
+#include <MuVisionSensor.h>
+
+#ifdef I2C_MODE
+#include <Wire.h>
+#endif
 #ifdef SERIAL_MODE
+#include <SoftwareSerial.h>
 #define TX_PIN 2
 #define RX_PIN 3
 SoftwareSerial mySerial(RX_PIN, TX_PIN);

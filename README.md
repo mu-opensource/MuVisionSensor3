@@ -36,47 +36,39 @@ void loop() {
   }
 }
 ```
-## More examples
-
-You can get more examples under the folder `examples/`.
-
-If you want to test your vision sensor, you can refer to the examples under the folder `examples/test/`.
-
-Or you want to use vision sensor without the library `MuVisionSensor`, you can refer to the examples under the folder `examples/use_arduino_base_interface_only/`.
-
 ## Supported platforms
 
 Right now the library is supported on a variety of arduino compatable platforms. If you want to use the library on other plantforms which supported on C/C++, please follow the steps below:
 
 ### Uart
 
-> 1.Edit file `mu_vision_sensor_uart_hw_interface.h` in path `MuVisionSensor/src/` 
+> 1.Edit file `mu_uart_interface.h` in path `MuVisionSensor/src/` 
 
-> 2.Modify typedef `MuVsUart` in line `21` to the UART Class supported by the platform
+> 2.Modify typedef `hw_port_t` in line `15` to the UART Class supported by the platform
 
-> 3.Save and close file `mu_vision_sensor_uart_hw_interface.h`
+> 3.Save and close file `mu_uart_interface.h`
 
-> 4.Edit file `mu_vision_sensor_uart_hw_interface.cpp` in path `MuVisionSensor/src/`
+> 4.Edit file `mu_uart_interface.cpp` in path `MuVisionSensor/src/`
 
 > 5.Override the functions below:
 ```cpp
 /**
   * @brief  Uart read characters from stream into buffer.
-  * @param  temp: uart buffer.
+  * @param  buf: uart buffer.
   * @param  length: the number of characters you want to read.
   * @retval returns the number of characters placed in the buffer, terminates if length characters have been read, or timeout.
   */
-uint32_t MuVisionSensorUart::UartRead(uint8_t* temp, uint8_t length);
+size_t MuUart::read(uint8_t* buf, uint8_t length);
 
 /**
   * @brief  Uart write characters from buffer into stream.
-  * @param  temp: uart buffer.
+  * @param  buf: uart buffer.
   * @param  length: the number of characters you want to write.
   * @retval returns the number of characters placed in the stream, terminates if length characters have been write, or timeout.
   */
-uint32_t MuVisionSensorUart::UartWrite(uint8_t* temp, uint8_t length);
+size_t MuUart::write(uint8_t* buf, uint8_t length);
 ```
-> 6.Save and close file `mu_vision_sensor_uart_hw_interface.cpp`
+> 6.Save and close file `mu_uart_interface.cpp`
 
 ### I2C
 

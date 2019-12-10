@@ -1,8 +1,3 @@
-#include <Arduino.h>
-#include <MuVisionSensor.h>
-#include <Wire.h>
-#include <SoftwareSerial.h>
-
 /*
  * Choose communication mode define here:
  *    I2C_MODE    : I2C mode, default pin: MU_SDA <==> ARDUINO_SDA, MU_SCL <==> ARDUINO_SCL
@@ -17,7 +12,14 @@
  */
 #define MU_ADDRESS    0x60
 
+#include <Arduino.h>
+#include <MuVisionSensor.h>
+
+#ifdef I2C_MODE
+#include <Wire.h>
+#endif
 #ifdef SERIAL_MODE
+#include <SoftwareSerial.h>
 #define TX_PIN 2
 #define RX_PIN 3
 SoftwareSerial mySerial(RX_PIN, TX_PIN);
@@ -27,7 +29,7 @@ MuVisionSensor Mu(MU_ADDRESS);
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  uint8_t err = MU_ERROR_FAIL;
+  uint8_t err = MU_FAIL;
 #ifdef I2C_MODE
   Wire.begin();
   // initialized MU on the I2C port

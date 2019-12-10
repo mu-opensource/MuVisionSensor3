@@ -19,8 +19,6 @@
  extern "C" {
 #endif
 
-#define STREAM_DEBUG_ENABLE 0
-
 typedef unsigned char mu_err_t;
 
 #ifdef BIT
@@ -30,33 +28,8 @@ typedef unsigned char mu_err_t;
 
 #define MU_MAX_RESULT                 1
 
-#define MU_PROTOCOL_VERSION           0x03
+#define MU_DEVICE_ID                  0x03
 #define visionTypeEnumToMacro(v)      (BIT(v-1))
-
-//Error Type
-#define MU_OK                         0x00
-#define CLIENT_WRITE_TIMEOUT          0x02
-#define SERVER_RESPONSE_TIMEOUT       0x03
-#define SERVER_RESPONSE_OTHERVISION   0x04
-#define MU_ERROR_UNSUPPROT_BAUD       0x10
-#define MU_ERROR_UNSUPPROT_PROTOCOL   0x11
-#define MU_ERROR_OK                   0xE0
-#define MU_ERROR_FAIL                 0xE1
-#define MU_ERROR_UNKNOW               0xE2
-#define MU_ERROR_TIMEOUT              0xE3
-#define MU_ERROR_CHECK_SUM            0xE4
-#define MU_ERROR_LENGTH               0xE5
-#define MU_ERROR_COMMAND              0xE6
-#define MU_ERROR_REG_ADDRESS          0xE7
-#define MU_ERROR_REG_VALUE            0xE8
-#define MU_ERROR_READ_ONLY            0xE9
-#define MU_ERROR_RESTART              0xEA
-//Protocol
-#define MU_PROTOCOL_START             0xFF
-#define MU_PROTOCOL_END               0xED
-#define MU_PROTOCOL_COMMADN_SET       0x01
-#define MU_PROTOCOL_COMMADN_GET       0x02
-#define MU_PROTOCOL_MESSAGE           0x11
 
 typedef enum {
   kVisionColorDetect  = 1,
@@ -80,7 +53,7 @@ typedef enum {
 } MuVsLedColor;
 //register address define
 typedef enum {
-  kRegProtocolVersion = 0x01,
+  kRegDeviceId        = 0x01,
   kRegFirmwareVersion = 0x02,
   kRegRestart         = 0x03,
   kRegSensorConfig1   = 0x04,
@@ -89,7 +62,7 @@ typedef enum {
   kRegLed2            = 0x07,
   kRegLedLevel        = 0x08,
   kRegUart            = 0x09,
-  kRegI2C             = 0x0A,
+  kRegLightSensor     = 0x0A,
   kRegIO              = 0x0B,
   kRegBle             = 0x0C,
   kRegCameraConfig1   = 0x10,
@@ -114,6 +87,24 @@ typedef enum {
   kRegResultData3     = 0x42,
   kRegResultData4     = 0x43,
   kRegResultData5     = 0x44,
+  kRegLsProximity     = 0x50,
+  kRegLsAlsL          = 0x51,
+  kRegLsAlsH          = 0x52,
+  kRegLsRawColorRedL  = 0x53,
+  kRegLsRawColorRedH  = 0x54,
+  kRegLsRawColorGreenL= 0x55,
+  kRegLsRawColorGreenH= 0x56,
+  kRegLsRawColorBlueL = 0x57,
+  kRegLsRawColorBlueH = 0x58,
+  kRegLsColor         = 0x59,
+  kRegLsGesture       = 0x5A,
+  kRegLsColorRed      = 0x60,
+  kRegLsColorGreen    = 0x61,
+  kRegLsColorBlue     = 0x62,
+  kRegLsColorHueL     = 0x63,
+  kRegLsColorHueH     = 0x64,
+  kRegLsColorSaturation  = 0x65,
+  kRegLsColorValue    = 0x66,
   kRegSn              = 0xD0,
 } MuVsRegAddress;
 
@@ -121,6 +112,7 @@ typedef enum {
 typedef enum {
   kLed1,
   kLed2,
+  kLedAll,
 } MuVsLed;
 typedef enum {
   kSerialMode,
@@ -137,21 +129,21 @@ typedef enum {
   kBaud921600   = 0x07,
 } MuVsBaudrate;
 typedef enum {
-  kStatus,        // whether the target is detected
-  kXValue,        // target horizontal position
-  kYValue,        // target vertical position
-  kWidthValue,    // target width
-  kHeightValue,   // target height
-  kLabel,         // target label
-  kRValue,        // R channel value
-  kGValue,        // G channel value
-  kBValue,        // B channel value
+  kStatus,        //!< whether the target is detected
+  kXValue,        //!< target horizontal position
+  kYValue,        //!< target vertical position
+  kWidthValue,    //!< target width
+  kHeightValue,   //!< target height
+  kLabel,         //!< target label
+  kRValue,        //!< R channel value
+  kGValue,        //!< G channel value
+  kBValue,        //!< B channel value
 } MuVsObjectInf;
 typedef enum {
-  // for UART mode only
-  kCallBackMode = 0,      // u need send a request first, and wait for response
-  kDataFlowMode = 1,      // MU will automatically response the result of the vision that u enabled, whether it detected or undetected
-  kEventMode    = 2,      // MU can only automatically response the result of the vision that u enabled, which detected target
+  //!< for UART mode only
+  kCallBackMode = 0,      //!< u need send a request first, and wait for response
+  kDataFlowMode = 1,      //!< MU will automatically response the result of the vision that u enabled, whether it detected or undetected
+  kEventMode    = 2,      //!< MU can only automatically response the result of the vision that u enabled, which detected target
 } MuVsStreamOutputMode;
 typedef enum {
   kZoomDefault  = 0,
@@ -162,27 +154,55 @@ typedef enum {
   kZoom5        = 5,
 } MuVsCameraZoom;
 typedef enum {
-  kFPSNormal        = 0,          // 25FPS mode
-  kFPSHigh          = 1,          // 50FPS mode
+  kFPSNormal        = 0,          //!< 25FPS mode
+  kFPSHigh          = 1,          //!< 50FPS mode
 } MuVsCameraFPS;
 typedef enum {
-  kAutoWhiteBalance       = 0,    // auto white balance mode
-  kLockWhiteBalance       = 1,    // lock white balance with current value, the entire process takes about 100ms
-  kWhiteLight             = 2,    // white light mode
-  kYellowLight            = 3,    // yellow light mode
+  kAutoWhiteBalance       = 0,    //!< auto white balance mode
+  kLockWhiteBalance       = 1,    //!< lock white balance with current value, the entire process takes about 100ms
+  kWhiteLight             = 2,    //!< white light mode
+  kYellowLight            = 3,    //!< yellow light mode
 } MuVsCameraWhiteBalance;
 typedef enum {
   kLevelDefault         = 0,
-  kLevelSpeed           = 1,      // speed first mode
-  kLevelBalance         = 2,      // balance mode
-  kLevelAccuracy        = 3,      // accuracy first mode
+  kLevelSpeed           = 1,      //!< speed first mode
+  kLevelBalance         = 2,      //!< balance mode
+  kLevelAccuracy        = 3,      //!< accuracy first mode
 } MuVsVisionLevel;
-
+typedef enum {
+  kSensitivityDefault  = 0,
+  kSensitivity1,
+  kSensitivity2,
+  kSensitivity3,
+} MuVsLsSensitivity;
+typedef enum {
+  kGestureNone = 0,
+  kGestureUp,
+  kGestureDown,
+  kGestureLeft,
+  kGestureRight,
+  kGesturePush,
+  kGesturePull,
+} MuVsLsGesture;
+typedef enum {
+  kLsColorLabel,
+  kLsColorRed,
+  kLsColorGreen,
+  kLsColorBlue,
+  kLsColorHue,
+  kLsColorSaturation,
+  kLsColorValue,
+} MuVsLsColorType;
+typedef enum {
+  kLsRawColorRed,
+  kLsRawColorGreen,
+  kLsRawColorBlue,
+} MuVsLsRawColorType;
 // register type
 typedef union {
   struct {
     unsigned char reserve0 : 2;
-    unsigned char default_setting :1;  // set 1 reset all config
+    unsigned char default_setting :1;  //!< set 1 reset all config
   };
   unsigned char sensor_config_reg_value;
 } MuVsSensorConfig1;
@@ -207,14 +227,14 @@ typedef union {
     unsigned char rotate:1;
     MuVsCameraFPS fps:1;
     MuVsCameraWhiteBalance white_balance:2;
-    unsigned char calibration:1;
+    unsigned char awb_locked:1;
   };
   unsigned char camera_reg_value;
 } MuVsCameraConfig1;
 typedef union {
   struct {
     unsigned char status :1;
-    unsigned char default_setting :1;  // set 1 to reset vision configuration
+    unsigned char default_setting :1;  //!< set 1 to reset vision configuration
     MuVsStreamOutputMode output_mode :2;
     MuVsVisionLevel level :2;
     unsigned char reserve6 :1;
@@ -222,6 +242,24 @@ typedef union {
   };
   unsigned char vision_config_reg_value;
 } MuVsVisionConfig1;
+typedef union {
+  struct {
+    unsigned char proximity_enable:1;
+    unsigned char als_enable:1;
+    unsigned char color_enable:1;
+    unsigned char gesture_enable:1;
+    MuVsLsSensitivity sensitivity:2;
+    bool white_balance_enable:1;
+  };
+  unsigned char ls_reg_value;
+} MuVsLightSensor;
+typedef union {
+  struct {
+    MuVsLsGesture gesture:7;
+    bool detect:1;
+  };
+  unsigned char ls_gesture_reg_value;
+} MuVsLsGestureConfig;
 typedef struct {
   unsigned char frame;
   unsigned char detect;
@@ -252,7 +290,7 @@ typedef struct {
     union {
       unsigned char result_data5;
       unsigned char color;
-      unsigned char lable;
+      unsigned char label;
     };
   } vision_result[MU_MAX_RESULT];
 } MuVsVisionState;

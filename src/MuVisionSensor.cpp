@@ -21,89 +21,57 @@ MuVisionSensor::~MuVisionSensor() {
   }
 }
 
-uint8_t MuVisionSensor::begin(void* communication_port,
-                              MuVsMode mode) {
-  if (mu_vs_method) {
-    delete mu_vs_method;
-    mu_vs_method = nullptr;
-  }
-  mode_ = mode;
-  switch (mode) {
-    case kSerialMode:
-      if (mu_vs_method == nullptr) {
-        mu_vs_method = new MuVisionSensorUart((MuVsUart *)communication_port,
-                                              address_);
-      }
-      break;
-    case kI2CMode:
-      if (mu_vs_method == nullptr) {
-        mu_vs_method = new MuVisionSensorI2C((MuVsI2C *)communication_port,
-                                              address_);
-      }
-      break;
-    default:
-      return MU_ERROR_FAIL;
-  }
-  // check vs2 protocol version
+uint8_t MuVisionSensor::ProtocolVersionCheck() {
   uint8_t protocol_version = 0;
   int err_count = 0;
-  while (mu_vs_method->Get(kRegProtocolVersion, &protocol_version)
-      || protocol_version != MU_PROTOCOL_VERSION) {
-    ++err_count;
-    if (err_count > 3) {
-      delete mu_vs_method;
-      mu_vs_method = nullptr;
-      return MU_ERROR_UNSUPPROT_PROTOCOL;
-    }
+  mu_err_t err;
+  for (;;) {
+    err = mu_vs_method->Get(kRegDeviceId, &protocol_version);
+    if (!err && protocol_version==MU_DEVICE_ID) break;
+    if (++err_count > 3) return MU_UNKNOW_PROTOCOL;
   }
-
-  return MU_OK;
+  // sensor set default if version is correction.
+  return SensorSetDefault();
 }
-uint8_t MuVisionSensor::begin(MuVsUart* communication_port) {
+
+uint8_t MuVisionSensor::begin(void* communication_port,
+                              MuVsMode mode) {
+  switch (mode) {
+    case kSerialMode:
+      return begin((MuUart::hw_port_t)communication_port);
+    case kI2CMode:
+      return begin((MuVsI2C*)communication_port);
+    default:
+      return MU_FAIL;
+  }
+}
+uint8_t MuVisionSensor::begin(MuUart::hw_port_t communication_port) {
+  if (mode_ == kSerialMode) {
+    return MU_OK;
+  }
   if (mu_vs_method) {
     delete mu_vs_method;
     mu_vs_method = nullptr;
   }
   mode_ = kSerialMode;
-  mu_vs_method = new MuVisionSensorUart((MuVsUart *)communication_port,
-                                        address_);
+  mu_vs_method = new MuVsUartMethod((MuUart::hw_port_t)communication_port,
+                                    address_);
   // check vs2 protocol version
-  uint8_t protocol_version = 0;
-  int err_count = 0;
-  while (mu_vs_method->Get(kRegProtocolVersion, &protocol_version)
-      || protocol_version != MU_PROTOCOL_VERSION) {
-    ++err_count;
-    if (err_count > 3) {
-      delete mu_vs_method;
-      mu_vs_method = nullptr;
-      return MU_ERROR_UNSUPPROT_PROTOCOL;
-    }
-  }
-
-  return MU_OK;
+  return ProtocolVersionCheck();
 }
 uint8_t MuVisionSensor::begin(MuVsI2C* communication_port) {
+  if (mode_ == kI2CMode) {
+    return MU_OK;
+  }
   if (mu_vs_method) {
     delete mu_vs_method;
     mu_vs_method = nullptr;
   }
   mode_ = kI2CMode;
-  mu_vs_method = new MuVisionSensorI2C((MuVsI2C *)communication_port,
-                                        address_);
+  mu_vs_method = new MuVisionSensorI2C(communication_port,
+                                       address_);
   // check vs2 protocol version
-  uint8_t protocol_version = 0;
-  int err_count = 0;
-  while (mu_vs_method->Get(kRegProtocolVersion, &protocol_version)
-      || protocol_version != MU_PROTOCOL_VERSION) {
-    ++err_count;
-    if (err_count > 3) {
-      delete mu_vs_method;
-      mu_vs_method = nullptr;
-      return MU_ERROR_UNSUPPROT_PROTOCOL;
-    }
-  }
-
-  return MU_OK;
+  return ProtocolVersionCheck();
 }
 
 //Advance interface
@@ -306,7 +274,6 @@ MuVisionType MuVisionSensor::UartUpdateResult(MuVisionType vision_type,
                                               bool wait_all_result) {
   MuVisionType vision_detect = 0;
   MuVsVisionState vision_state;
-  uint8_t mu_address;
   MuVsMessageVisionType mu_vision_type;
   mu_err_t err;
   switch(output_mode_) {
@@ -315,10 +282,9 @@ MuVisionType MuVisionSensor::UartUpdateResult(MuVisionType vision_type,
         if ((vision_type & visionTypeEnumToMacro(i)) && vision_state_[i-1]) {
           ((MuVsUartMethod *)mu_vs_method)->GetMessage((MuVsMessageVisionType)i);
           do {
-            err = ((MuVsUartMethod *)mu_vs_method)->Read(&mu_address, &mu_vision_type, &vision_state);
+            err = ((MuVsUartMethod *)mu_vs_method)->Read(&mu_vision_type, &vision_state);
             if (err) return vision_detect;
-            if (mu_address == address_
-                && (vision_type & visionTypeEnumToMacro(mu_vision_type))
+            if ((vision_type & visionTypeEnumToMacro(mu_vision_type))
                 && vision_state_[mu_vision_type-1]->frame != vision_state.frame
                 && mu_vision_type
                 && mu_vision_type < kVisionMaxType) {
@@ -327,7 +293,7 @@ MuVisionType MuVisionSensor::UartUpdateResult(MuVisionType vision_type,
               vision_detect = vision_detect | visionTypeEnumToMacro(mu_vision_type);
               if (mu_vision_type == i && !wait_all_result) return vision_detect;
             }
-          } while (mu_address != address_ || mu_vision_type != i);
+          } while (mu_vision_type != i);
         }
       }
       break;
@@ -335,10 +301,9 @@ MuVisionType MuVisionSensor::UartUpdateResult(MuVisionType vision_type,
     case kDataFlowMode:
     case kEventMode:
       while (vision_type) {
-        err = ((MuVsUartMethod *)mu_vs_method)->Read(&mu_address, &mu_vision_type, &vision_state);
+        err = ((MuVsUartMethod *)mu_vs_method)->Read(&mu_vision_type, &vision_state);
         if (err) return vision_detect;
-        if (mu_address == address_
-            && (vision_type & visionTypeEnumToMacro(mu_vision_type))
+        if ((vision_type & visionTypeEnumToMacro(mu_vision_type))
             && mu_vision_type
             && mu_vision_type < kVisionMaxType
             && vision_state_[mu_vision_type-1]) {
@@ -390,7 +355,7 @@ uint8_t MuVisionSensor::write(MuVisionType vision_type,
       address = kRegParamValue5;
       break;
     default:
-      return MU_ERROR_FAIL;
+      return MU_FAIL;
   }
   err = mu_vs_method->Set(kRegVisionId, vs_type);
   if (err) return err;
@@ -420,7 +385,7 @@ uint8_t MuVisionSensor::read(MuVisionType vision_type,
     case kHeightValue:
       return vision_state_[vision_pointer]->vision_result[result_num].height;
     case kLabel:
-      return vision_state_[vision_pointer]->vision_result[result_num].lable;
+      return vision_state_[vision_pointer]->vision_result[result_num].label;
     case kGValue:
       return vision_state_[vision_pointer]->vision_result[result_num].color_g_value;
     case kRValue:
@@ -441,8 +406,13 @@ uint8_t MuVisionSensor::SensorSetRestart(void) {
 uint8_t MuVisionSensor::SensorSetDefault(void) {
   MuVsSensorConfig1 sensor_config1;
   mu_err_t err;
+  sensor_config1.sensor_config_reg_value = 0;
   sensor_config1.default_setting = 1;
   err = mu_vs_method->Set(kRegSensorConfig1, sensor_config1.sensor_config_reg_value);
+  while (sensor_config1.default_setting) {
+    err = mu_vs_method->Get(kRegSensorConfig1, &sensor_config1.sensor_config_reg_value);
+    if (err) return err;
+  }
   return err;
 }
 
@@ -464,8 +434,13 @@ uint8_t MuVisionSensor::LedSetMode(MuVsLed led, bool manual, bool hold) {
     case kLed2:
       address = kRegLed2;
       break;
+    case kLedAll:
+      err = this->LedSetMode(kLed1, manual, hold);
+      if (err) return err;
+      err = this->LedSetMode(kLed2, manual, hold);
+      return err;
     default:
-      return MU_ERROR_FAIL;
+      return MU_UNKNOW_PARAM;
   }
   err = mu_vs_method->Get(address, &led_config.led_reg_value);
   if (err) return err;
@@ -481,15 +456,15 @@ uint8_t MuVisionSensor::LedSetMode(MuVsLed led, bool manual, bool hold) {
 }
 
 uint8_t MuVisionSensor::LedSetColor(MuVsLed led,
-                    MuVsLedColor detected_color,
-                    MuVsLedColor undetected_color,
-                    uint8_t level) {
+                                    MuVsLedColor detected_color,
+                                    MuVsLedColor undetected_color,
+                                    uint8_t level) {
   MuVsLedConfig led_config;
   MuVsRegAddress address;
   mu_err_t err;
   uint8_t led_level;
+  // set LED brightness level
   mu_vs_method->Get(kRegLedLevel, &led_level);
-
   switch(led) {
     case kLed1:
       address = kRegLed1;
@@ -501,9 +476,17 @@ uint8_t MuVisionSensor::LedSetColor(MuVsLed led,
       led_level = (led_level&0x0F) | ((level&0x0F)<<4);
       mu_vs_method->Set(kRegLedLevel, led_level);
       break;
+    case kLedAll:
+      err = this->LedSetColor(kLed1, detected_color,
+                              undetected_color, level);
+      if (err) return err;
+      err = this->LedSetColor(kLed2, detected_color,
+                              undetected_color, level);
+      return err;
     default:
-      return MU_ERROR_FAIL;
+      return MU_UNKNOW_PARAM;
   }
+  // set LED color
   err = mu_vs_method->Get(address, &led_config.led_reg_value);
   if (err) return err;
   if (led_config.detected_color != detected_color
@@ -555,13 +538,17 @@ uint8_t MuVisionSensor::CameraSetAwb(MuVsCameraWhiteBalance awb) {
   MuVsCameraConfig1 camera_config1;
   mu_err_t err;
   err = mu_vs_method->Get(kRegCameraConfig1, &camera_config1.camera_reg_value);
-  if (camera_config1.white_balance != awb) {
+  if (awb == kLockWhiteBalance) {
+    camera_config1.awb_locked = 0;
     camera_config1.white_balance = awb;
     err = mu_vs_method->Set(kRegCameraConfig1, camera_config1.camera_reg_value);
     // waiting for lock white balance
-    if (awb == kLockWhiteBalance) {
-      delay(1000);
-    }
+    do {
+      err = mu_vs_method->Get(kRegCameraConfig1, &camera_config1.camera_reg_value);
+    } while (camera_config1.awb_locked == 0);
+  } else if (camera_config1.white_balance != awb) {
+    camera_config1.white_balance = awb;
+    err = mu_vs_method->Set(kRegCameraConfig1, camera_config1.camera_reg_value);
   }
   return err;
 }
@@ -602,22 +589,159 @@ uint8_t MuVisionSensor::UartSetBaudrate(MuVsBaudrate baud) {
   return err;
 }
 
+// Light sensor functions
+uint8_t MuVisionSensor::LsBegin(MuLightSensorType ls_type) {
+  mu_err_t err = MU_OK;
+  MuVsLightSensor ls_config;
+  err = mu_vs_method->Get(kRegLightSensor, &ls_config.ls_reg_value);
+  if (err) return err;
+  ls_config.ls_reg_value |= ls_type;
+  err = mu_vs_method->Set(kRegLightSensor, ls_config.ls_reg_value);
+  return err;
+}
+
+uint8_t MuVisionSensor::LsEnd(MuLightSensorType ls_type) {
+  mu_err_t err = MU_OK;
+  MuVsLightSensor ls_config;
+  ls_type = ~(ls_type & 0x0F);
+  err = mu_vs_method->Get(kRegLightSensor, &ls_config.ls_reg_value);
+  if (err) return err;
+  ls_config.ls_reg_value &= ls_type;
+  err = mu_vs_method->Set(kRegLightSensor, ls_config.ls_reg_value);
+  return err;
+}
+
+uint8_t MuVisionSensor::LsSetSensitivity(MuVsLsSensitivity sensitivity) {
+  if (sensitivity > kSensitivity3) {
+    return MU_FAIL;
+  }
+  mu_err_t err = MU_OK;
+  MuVsLightSensor ls_config;
+  err = mu_vs_method->Get(kRegLightSensor, &ls_config.ls_reg_value);
+  ls_config.sensitivity = sensitivity;
+  err = mu_vs_method->Set(kRegLightSensor, ls_config.ls_reg_value);
+  return err;
+}
+
+uint8_t MuVisionSensor::LsWhiteBalanceEnable() {
+  mu_err_t err = MU_OK;
+  MuVsLightSensor ls_config;
+  err = mu_vs_method->Get(kRegLightSensor, &ls_config.ls_reg_value);
+  ls_config.white_balance_enable = 1;
+  err = mu_vs_method->Set(kRegLightSensor, ls_config.ls_reg_value);
+  do {
+    mu_vs_method->Get(kRegLightSensor, &ls_config.ls_reg_value);
+  } while (ls_config.white_balance_enable);
+  return err;
+}
+
+uint8_t MuVisionSensor::LsReadProximity() {
+  uint8_t proximity = 0;
+  mu_vs_method->Get(kRegLsProximity, &proximity);
+  return proximity;
+}
+
+uint16_t MuVisionSensor::LsReadAmbientLight() {
+  uint8_t als[2] = {0};
+  uint16_t* ret = (uint16_t *)als;
+  mu_vs_method->Get(kRegLsAlsL, &als[0]);
+  mu_vs_method->Get(kRegLsAlsH, &als[1]);
+  return *ret;
+}
+
+uint16_t MuVisionSensor::LsReadColor(MuVsLsColorType color_t) {
+  uint8_t ret = 0;
+  switch(color_t) {
+    case kLsColorLabel: {
+      mu_vs_method->Get(kRegLsColor, &ret);
+      break;
+    }
+    case kLsColorRed: {
+      mu_vs_method->Get(kRegLsColorRed, &ret);
+      break;
+    }
+    case kLsColorGreen: {
+      mu_vs_method->Get(kRegLsColorGreen, &ret);
+      break;
+    }
+    case kLsColorBlue: {
+      mu_vs_method->Get(kRegLsColorBlue, &ret);
+      break;
+    }
+    case kLsColorHue: {
+      uint8_t hue8[2];
+      uint16_t* hue16 = (uint16_t*)hue8;
+      mu_vs_method->Get(kRegLsColorHueL, &hue8[0]);
+      mu_vs_method->Get(kRegLsColorHueH, &hue8[1]);
+      return *hue16;
+    }
+    case kLsColorSaturation: {
+      mu_vs_method->Get(kRegLsColorSaturation, &ret);
+      break;
+    }
+    case kLsColorValue: {
+      mu_vs_method->Get(kRegLsColorValue, &ret);
+      break;
+    }
+    default:
+      break;
+  }
+  return ret;
+}
+
+uint16_t MuVisionSensor::LsReadRawColor(MuVsLsRawColorType color_t) {
+  uint8_t ret8[2];
+  uint16_t* ret16 = (uint16_t*)ret8;
+  switch(color_t) {
+    case kLsRawColorRed:
+      mu_vs_method->Get(kRegLsRawColorRedL, &ret8[0]);
+      mu_vs_method->Get(kRegLsRawColorRedH, &ret8[1]);
+      break;
+    case kLsRawColorGreen:
+      mu_vs_method->Get(kRegLsRawColorGreenL, &ret8[0]);
+      mu_vs_method->Get(kRegLsRawColorGreenH, &ret8[1]);
+      break;
+    case kLsRawColorBlue:
+      mu_vs_method->Get(kRegLsRawColorBlueL, &ret8[0]);
+      mu_vs_method->Get(kRegLsRawColorBlueH, &ret8[1]);
+      break;
+    default:
+      break;
+  }
+  return *ret16;
+}
+
+MuVsLsGesture MuVisionSensor::LsReadGesture() {
+  MuVsLsGestureConfig gesture_config;
+  MuVsLsGesture gesture;
+  mu_vs_method->Get(kRegLsGesture, &gesture_config.ls_gesture_reg_value);
+  gesture = gesture_config.gesture;
+  if (gesture_config.gesture) {
+    gesture_config.gesture = kGestureNone;
+    mu_vs_method->Set(kRegLsGesture, gesture_config.ls_gesture_reg_value);
+  }
+  if (gesture > kGesturePull) {
+    gesture = kGestureNone;
+  }
+  return gesture;
+}
+
 bool MuVisionSensor::malloc_vision_buffer(MuVsMessageVisionType vision_type) {
   if (vision_type
       && vision_type < kVisionMaxType
       && vision_state_[vision_type-1] == nullptr) {
     vision_state_[vision_type-1] = new MuVsVisionState;
-    vision_state_[vision_type-1]->detect = 0;
-    vision_state_[vision_type-1]->frame = 0;
+    return vision_state_[vision_type-1];
   }
-  return true;
+  return false;
 }
 
 bool MuVisionSensor::free_vision_buffer(MuVsMessageVisionType vision_type) {
   if (vision_type
       && vision_type < kVisionMaxType
       && vision_state_[vision_type-1]) {
-    vision_state_[vision_type-1] = new MuVsVisionState;
+    delete vision_state_[vision_type-1];
+    vision_state_[vision_type-1] = nullptr;
   }
   return true;
 }

@@ -16,6 +16,7 @@
 #define ARDUINO_LIB_MUVISIONSENSOR_SRC_MU_VISION_SENSOR_I2C_INTERFACE_H_
 
 #include "mu_vision_sensor_interface.h"
+#include "MorpxProtocolAnalysis/mu_protocol_analysis.h"
 
 class MuVsI2CMethod : public MuVsMethod {
  public:
