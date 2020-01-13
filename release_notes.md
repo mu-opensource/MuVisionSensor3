@@ -1,3 +1,7 @@
+MuVisionSensor V1.2.2
+==============================
+- 1.bug fixes: now all example works correctly
+
 MuVisionSensor V1.2.1
 ==============================
 - 1.bug fixes: now all the examples can works correctly on boards that don't have `SoftwareSerial` library like esp32/8266

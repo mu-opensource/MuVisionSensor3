@@ -234,7 +234,7 @@ class MuVisionSensor {
     */
   uint8_t CameraSetRotate(bool enable);
   /**
-    * @brief  set camera zoom.
+    * @brief  set camera FPS.
     * @param  camera FPS type.
     * @retval MU_OK:  success
     *         other:  error

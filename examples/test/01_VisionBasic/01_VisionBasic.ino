@@ -105,7 +105,7 @@ void loop() {
         detected_count++;
         Serial.print("  || detected");
         Serial.print("  label:");
-        Serial.print(vision_state->vision_result[0].lable);
+        Serial.print(vision_state->vision_result[0].label);
         if (VISION_TYPE != VISION_COLOR_RECOGNITION) {
           Serial.print("  x:");
           Serial.print(vision_state->vision_result[0].x_value);

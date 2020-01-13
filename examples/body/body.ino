@@ -29,7 +29,7 @@ MuVisionSensor Mu(MU_ADDRESS);
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  uint8_t err = MU_ERROR_FAIL;
+  uint8_t err = 0;
 #ifdef I2C_MODE
   Wire.begin();
   err = Mu.begin(&Wire);                                            // initialized MU on I2C port
@@ -47,6 +47,7 @@ void setup() {
       delay(5000);
     } while (1);
   }
+  // enable vision: body detect
   Mu.VisionBegin(VISION_BODY_DETECT);                         // enable vision body
 }
 

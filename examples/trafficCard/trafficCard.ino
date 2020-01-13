@@ -29,7 +29,7 @@ MuVisionSensor Mu(MU_ADDRESS);
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  uint8_t err = MU_ERROR_FAIL;
+  uint8_t err = 0;
 #ifdef I2C_MODE
   Wire.begin();
   // initialized MU on the I2C port
@@ -49,7 +49,7 @@ void setup() {
       delay(5000);
     } while (1);
   }
-  // enable vision: number card
+  // enable vision: traffic card
   Mu.VisionBegin(VISION_TRAFFIC_CARD_DETECT);
 }
 
@@ -59,7 +59,7 @@ void loop() {
 
   // read result
   if (Mu.GetValue(VISION_TRAFFIC_CARD_DETECT, kStatus)) {                   // update vision result and get status, 0: undetected, other: detected
-    Serial.println("vision shape card detected:");
+    Serial.println("vision traffic card detected:");
     Serial.print("x = ");
     Serial.println(Mu.GetValue(VISION_TRAFFIC_CARD_DETECT, kXValue));       // get vision result: x axes value
     Serial.print("y = ");

@@ -29,7 +29,7 @@ MuVisionSensor Mu(MU_ADDRESS);
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  uint8_t err = MU_ERROR_FAIL;
+  uint8_t err = 0;
 #ifdef I2C_MODE
   Wire.begin();
   // initialized MU on the I2C port
@@ -49,7 +49,7 @@ void setup() {
       delay(5000);
     } while (1);
   }
-  // enable vision: number card
+  // enable vision: color recognition
   Mu.VisionBegin(VISION_COLOR_RECOGNITION);
   Mu.write(VISION_COLOR_RECOGNITION, kXValue, 50);                  // set detect region center x value(0~100)
   Mu.write(VISION_COLOR_RECOGNITION, kYValue, 50);                  // set detect region center y value(0~100)
@@ -64,7 +64,7 @@ void loop() {
 
   // read result
   if (Mu.GetValue(VISION_COLOR_RECOGNITION, kStatus)) {                    // update vision result and get status, 0: undetected, other: detected
-    Serial.println("vision color detected:");
+    Serial.println("vision color recognition:");
     Serial.print("label = ");
     switch(Mu.GetValue(VISION_COLOR_RECOGNITION, kLabel)) {                // get vision result: label value
       case MU_COLOR_BLACK:

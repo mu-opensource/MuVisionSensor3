@@ -29,7 +29,7 @@ MuVisionSensor Mu(MU_ADDRESS);
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  uint8_t err = MU_ERROR_FAIL;
+  uint8_t err = 0;
 #ifdef I2C_MODE
   Wire.begin();
   // initialized MU on the I2C port
@@ -49,7 +49,7 @@ void setup() {
       delay(5000);
     } while (1);
   }
-  // enable vision: number card
+  // enable vision: color detect
   Mu.VisionBegin(VISION_COLOR_DETECT);
   Mu.write(VISION_COLOR_DETECT, kLabel, MU_COLOR_BLACK);            // set detect color type: black
   Mu.CameraSetAwb(kLockWhiteBalance);                               // lock AWB

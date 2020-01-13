@@ -130,7 +130,7 @@ void loop() {
       Serial.print("  fps:");
       Serial.print(1000 / (total_process_time / total_process_count));
       Serial.print("  || label:");
-      PrintColorLabel(vision_state->vision_result[0].lable);
+      PrintColorLabel(vision_state->vision_result[0].label);
       Serial.print("  r:");
       Serial.print(vision_state->vision_result[0].x_value);
       Serial.print("  g:");

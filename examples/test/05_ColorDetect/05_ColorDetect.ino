@@ -138,7 +138,7 @@ void loop() {
         detected_count++;
       Serial.print("  || detected");
       Serial.print("  label:");
-      PrintColorLabel(vision_state->vision_result[0].lable);
+      PrintColorLabel(vision_state->vision_result[0].label);
       Serial.print("  x:");
       Serial.print(vision_state->vision_result[0].x_value);
       Serial.print("  y:");
